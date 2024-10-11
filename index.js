@@ -16,17 +16,9 @@ app.use(express.json());
 const allowedOrigins = process.env.NODE_ENV === 'production'
   ? ['https://store-two-sigma.vercel.app'] // Production domain
   : ['http://localhost:3000']; // Local development
-
+console.log('Environment', process.env.NODE_ENV)
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (e.g., mobile apps, Postman)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
