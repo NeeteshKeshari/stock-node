@@ -13,7 +13,9 @@ const salesRoutes = require('./routes/salesRoutes'); // New
 const app = express();
 
 app.use(express.json());
-const allowedOrigins = req.hostname === 'localhost'
+
+// Check if it's a localhost environment
+const allowedOrigins = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === undefined
   ? ['http://localhost:3000'] // Local development
   : ['https://store-two-sigma.vercel.app']; // Production domain
 
@@ -47,6 +49,7 @@ app.use('/api/sales', salesRoutes); // New
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
+
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
