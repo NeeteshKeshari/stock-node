@@ -13,8 +13,12 @@ const salesRoutes = require('./routes/salesRoutes'); // New
 const app = express();
 
 app.use(express.json());
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? 'https://store-two-sigma.vercel.app'
+  : 'http://localhost:3000';
+
 app.use(cors({
-    origin: 'https://store-two-sigma.vercel.app', 
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true, 
 }));
