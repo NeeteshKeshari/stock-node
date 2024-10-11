@@ -13,12 +13,18 @@ const salesRoutes = require('./routes/salesRoutes'); // New
 const app = express();
 
 app.use(express.json());
-const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? ['https://store-two-sigma.vercel.app'] // Production domain
-  : ['http://localhost:3000']; // Local development
-console.log('Environment', process.env.NODE_ENV)
+const allowedOrigins = req.hostname === 'localhost'
+  ? ['http://localhost:3000'] // Local development
+  : ['https://store-two-sigma.vercel.app']; // Production domain
+
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
