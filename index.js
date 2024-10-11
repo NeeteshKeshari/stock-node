@@ -14,13 +14,21 @@ const app = express();
 
 app.use(express.json());
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? 'https://store-two-sigma.vercel.app'
-  : 'http://localhost:3000';
+  ? ['https://store-two-sigma.vercel.app'] // Production domain
+  : ['http://localhost:3000']; // Local development
 
 app.use(cors({
-    origin: allowedOrigins,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true, 
+  origin: function (origin, callback) {
+    // Allow requests with no origin (e.g., mobile apps, Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
 }));
 
 // MongoDB connection
