@@ -8,6 +8,7 @@ const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
 const customerRoutes = require('./routes/customerRoutes'); // New
 const stockRoutes = require('./routes/stockRoutes'); // New
+const entryRoutes = require('./routes/entryRoutes'); // New
 const salesRoutes = require('./routes/salesRoutes'); // New
 
 const app = express();
@@ -45,6 +46,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/customers', customerRoutes); // New
 app.use('/api/stock', stockRoutes); // New
+app.use('/api/entry', stockRoutes); // New
 app.use('/api/sales', salesRoutes); // New
 
 app.get('/', (req, res) => {
