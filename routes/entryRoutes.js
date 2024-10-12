@@ -14,12 +14,13 @@ router.get('/', async (req, res) => {
 
 // POST a new entry item
 router.post('/', async (req, res) => {
-    const { productName, quantity, date } = req.body;
+    const { productName, quantity, number, date } = req.body;
 
     try {
         const newEntry = new Entry({
             productName,
             quantity,
+            number,
             date,
         });
 
