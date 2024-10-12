@@ -20,13 +20,14 @@ const allowedOrigins = process.env.NODE_ENV === 'development' || process.env.NOD
   : ['https://store-two-sigma.vercel.app']; // Production domain
 
 app.use(cors({
-  origin: (origin, callback) => {
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  // origin: (origin, callback) => {
+  //   if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+  //     callback(null, true);
+  //   } else {
+  //     callback(new Error('Not allowed by CORS'));
+  //   }
+  // },
+  origin: 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
