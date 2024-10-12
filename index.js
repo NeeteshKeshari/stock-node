@@ -46,7 +46,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/customers', customerRoutes); // New
 app.use('/api/stock', stockRoutes); // New
-app.use('/api/entry', stockRoutes); // New
+app.use('/api/entry', entryRoutes); // New
 app.use('/api/sales', salesRoutes); // New
 
 app.get('/', (req, res) => {
