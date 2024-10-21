@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Entry = require("../models/entry");
+const { authenticateToken } = require('../middleware/auth');
 
 // GET all entry items
-router.get('/', async (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
     try {
         const entry = await Entry.find();
         res.json(entry);
@@ -13,7 +14,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST a new entry item
-router.post('/', async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
     const { productName, quantity, userNum, approvalStatus, number, date } = req.body;
 
     try {
@@ -34,7 +35,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT to update a entry item by ID
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
@@ -50,7 +51,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE a entry item
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     try {
         const deletedEntry = await Entry.findByIdAndDelete(id);
