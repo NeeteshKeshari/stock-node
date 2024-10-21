@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Sales = require("../models/sales");
+const { authenticateToken } = require('../middleware/auth');
 
 // GET all sales
-router.get('/', async (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
     try {
         const sales = await Sales.find();
         res.json(sales);
@@ -13,7 +14,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST a new sale
-router.post('/', async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
     const {
         product,
         quantity,
@@ -47,7 +48,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT to update a sale by ID
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const {
         product,
@@ -88,7 +89,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE a sale
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     try {
         const deletedSale = await Sales.findByIdAndDelete(id);
