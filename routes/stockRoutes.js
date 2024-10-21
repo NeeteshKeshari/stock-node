@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Stock = require("../models/stock");
+const { authenticateToken } = require('../middleware/auth');
 
 // GET all stock items
-router.get('/', async (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
     try {
         const stock = await Stock.find();
         res.json(stock);
@@ -13,7 +14,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST a new stock item
-router.post('/', async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
     const { rawMaterialName, quantity, price, date } = req.body;
 
     try {
@@ -32,7 +33,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT to update a stock item by ID
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
@@ -48,7 +49,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE a stock item
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     try {
         const deletedStock = await Stock.findByIdAndDelete(id);
