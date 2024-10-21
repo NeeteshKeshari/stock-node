@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Customer = require("../models/customer");
+const { authenticateToken } = require('../middleware/auth'); // Import the authentication middleware
 
 // GET all customers
-router.get('/', async (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
     try {
         const customer = await Customer.find();
         res.json(customer);
@@ -14,7 +15,7 @@ router.get('/', async (req, res) => {
 
 
 // POST a new customer
-router.post('/', async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
     const { customerName, customerAddress } = req.body;
 
     try {
@@ -31,7 +32,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT to update a customer by ID
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
@@ -47,7 +48,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE a customer
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     try {
         const deletedCustomer = await Customer.findByIdAndDelete(id);
