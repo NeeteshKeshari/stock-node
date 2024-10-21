@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Sales = require("../models/sales"); // Ensure this matches your model name
+const Sales = require("../models/sales");
 
 // GET all sales
 router.get('/', async (req, res) => {
@@ -21,13 +21,13 @@ router.post('/', async (req, res) => {
         date,
         customerName,
         customerAddress,
-        amountPaid,
+        amountPaid,  // Expecting an array of objects [{ amount: Number, date: Date }]
         amountDue,
         totalDue
     } = req.body;
 
     try {
-        const newSale = new Sales({  // Use Sales here, not Sale
+        const newSale = new Sales({
             product,
             quantity,
             cost,
@@ -49,10 +49,35 @@ router.post('/', async (req, res) => {
 // PUT to update a sale by ID
 router.put('/:id', async (req, res) => {
     const { id } = req.params;
-    const updates = req.body;
+    const {
+        product,
+        quantity,
+        cost,
+        date,
+        customerName,
+        customerAddress,
+        amountPaid,  // Allow updating the payments array
+        amountDue,
+        totalDue
+    } = req.body;
 
     try {
-        const updatedSale = await Sales.findByIdAndUpdate(id, updates, { new: true }); // Use Sales here, not Sale
+        const updatedSale = await Sales.findByIdAndUpdate(
+            id, 
+            {
+                product,
+                quantity,
+                cost,
+                date,
+                customerName,
+                customerAddress,
+                amountPaid,
+                amountDue,
+                totalDue
+            },
+            { new: true }
+        );
+
         if (!updatedSale) {
             return res.status(404).json({ message: 'Sale not found' });
         }
