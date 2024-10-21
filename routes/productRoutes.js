@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Product = require("../models/product");
+const { authenticateToken } = require('../middleware/auth');
 
 // GET all products
-router.get('/', async (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
     try {
         const products = await Product.find();
         res.json(products);
@@ -13,7 +14,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST a new product
-router.post('/', async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
     const {
         selectedProduct,
         quantity,
@@ -49,7 +50,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT to update a product by ID
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
@@ -65,7 +66,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE a product
-router.delete('/:id', async (req, res) => { // Removed the "products/" from the path
+router.delete('/:id', authenticateToken, async (req, res) => { // Removed the "products/" from the path
     const { id } = req.params;
     try {
         const deletedProduct = await Product.findByIdAndDelete(id);
