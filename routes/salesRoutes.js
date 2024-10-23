@@ -4,6 +4,7 @@ const Sales = require("../models/sales");
 const Product = require("../models/product");
 const { authenticateToken } = require('../middleware/auth');
 
+// GET all sales
 router.get('/', authenticateToken, async (req, res) => {
     try {
         const sales = await Sales.find();
@@ -13,7 +14,6 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-// Helper function to update product quantity
 const adjustProductQuantity = async (productId, soldQuantity) => {
     const product = await Product.findById(productId);
     if (!product) {
@@ -30,7 +30,6 @@ const adjustProductQuantity = async (productId, soldQuantity) => {
     await product.save();
 };
 
-// POST a new sale
 // POST a new sale
 router.post('/', authenticateToken, async (req, res) => {
     const {
@@ -135,6 +134,20 @@ router.put('/:id', authenticateToken, async (req, res) => {
         res.json(updatedSale);
     } catch (error) {
         res.status(500).json({ message: 'Failed to update sale', error: error.message });
+    }
+});
+
+// DELETE a sale
+router.delete('/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    try {
+        const deletedSale = await Sales.findByIdAndDelete(id);
+        if (!deletedSale) {
+            return res.status(404).json({ message: 'Sale not found' });
+        }
+        res.status(200).json({ message: 'Sale deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to delete sale', error });
     }
 });
 
