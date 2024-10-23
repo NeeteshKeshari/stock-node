@@ -1,109 +1,50 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
+const { body, validationResult } = require('express-validator');
 const router = express.Router();
-const Sales = require("../models/sales");
-const { authenticateToken } = require('../middleware/auth');
+const User = require('../models/user');
+require('dotenv').config();
 
-// GET all sales
-router.get('/', authenticateToken, async (req, res) => {
-    try {
-        const sales = await Sales.find();
-        res.json(sales);
-    } catch (error) {
-        res.status(500).json({ message: 'Failed to fetch sales', error });
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret'; // Use env variable for JWT secret
+
+// Middleware to authenticate using JWT
+const authenticateToken = (req, res, next) => {
+  const token = req.cookies.token;
+  if (!token) return res.status(401).json({ message: 'Access denied. No token provided.' });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ message: 'Invalid token' });
+    req.user = user;
+    next();
+  });
+};
+
+// Login route
+router.post('/login', [
+  body('mobile').isString().withMessage('Mobile must be a string'),
+  body('password').isString().withMessage('Password must be a string'),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const { mobile, password } = req.body;
+
+    const user = await User.findOne({ mobile });
+    if (!user || user.password !== password) {
+      return res.status(401).json({ message: 'Access denied' });
     }
+    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '10h' });
+    res.cookie('token', token, { httpOnly: true, secure: true }); 
+
+    return res.status(200).json({ message: 'Login successful', token, userType: user.type || user });
+  } catch (error) {
+    console.error('Login error:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
 });
 
-// POST a new sale
-router.post('/', authenticateToken, async (req, res) => {
-    const {
-        product,
-        productId,
-        quantity,
-        cost,
-        date,
-        customerName,
-        customerAddress,
-        amountPaid,  // Expecting an array of objects [{ amount: Number, date: Date }]
-        amountDue,
-        totalDue
-    } = req.body;
-
-    try {
-        const newSale = new Sales({
-            product,
-            productId,
-            quantity,
-            cost,
-            date,
-            customerName,
-            customerAddress,
-            amountPaid,
-            amountDue,
-            totalDue
-        });
-
-        const savedSale = await newSale.save();
-        res.status(201).json(savedSale);
-    } catch (error) {
-        res.status(500).json({ message: 'Failed to create sale', error });
-    }
-});
-
-// PUT to update a sale by ID
-router.put('/:id', authenticateToken, async (req, res) => {
-    const { id } = req.params;
-    const {
-        product,
-        productId,
-        quantity,
-        cost,
-        date,
-        customerName,
-        customerAddress,
-        amountPaid,  // Allow updating the payments array
-        amountDue,
-        totalDue
-    } = req.body;
-
-    try {
-        const updatedSale = await Sales.findByIdAndUpdate(
-            id, 
-            {
-                product,
-                productId,
-                quantity,
-                cost,
-                date,
-                customerName,
-                customerAddress,
-                amountPaid,
-                amountDue,
-                totalDue
-            },
-            { new: true }
-        );
-
-        if (!updatedSale) {
-            return res.status(404).json({ message: 'Sale not found' });
-        }
-        res.json(updatedSale);
-    } catch (error) {
-        res.status(500).json({ message: 'Failed to update sale', error });
-    }
-});
-
-// DELETE a sale
-router.delete('/:id', authenticateToken, async (req, res) => {
-    const { id } = req.params;
-    try {
-        const deletedSale = await Sales.findByIdAndDelete(id);
-        if (!deletedSale) {
-            return res.status(404).json({ message: 'Sale not found' });
-        }
-        res.status(200).json({ message: 'Sale deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Failed to delete sale', error });
-    }
-});
 
 module.exports = router;
