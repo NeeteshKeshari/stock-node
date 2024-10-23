@@ -4,6 +4,15 @@ const Sales = require("../models/sales");
 const Product = require("../models/product");
 const { authenticateToken } = require('../middleware/auth');
 
+router.get('/', authenticateToken, async (req, res) => {
+    try {
+        const sales = await Sales.find();
+        res.json(sales);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch sales', error });
+    }
+});
+
 // Helper function to update product quantity
 const adjustProductQuantity = async (productId, soldQuantity) => {
     const product = await Product.findById(productId);
