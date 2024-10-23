@@ -1,50 +1,132 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
-const { body, validationResult } = require('express-validator');
 const router = express.Router();
-const User = require('../models/user');
-require('dotenv').config();
+const Sales = require("../models/sales");
+const Product = require("../models/product");
+const { authenticateToken } = require('../middleware/auth');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret'; // Use env variable for JWT secret
+// Helper function to update product quantity
+const adjustProductQuantity = async (productId, soldQuantity) => {
+    const product = await Product.findById(productId);
+    if (!product) {
+        throw new Error('Product not found');
+    }
 
-// Middleware to authenticate using JWT
-const authenticateToken = (req, res, next) => {
-  const token = req.cookies.token;
-  if (!token) return res.status(401).json({ message: 'Access denied. No token provided.' });
+    // Ensure that the product has enough quantity before proceeding
+    if (product.quantity < soldQuantity) {
+        throw new Error('Not enough product quantity available');
+    }
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ message: 'Invalid token' });
-    req.user = user;
-    next();
-  });
+    // Decrease the product quantity
+    product.quantity -= soldQuantity;
+    await product.save();
 };
 
-// Login route
-router.post('/login', [
-  body('mobile').isString().withMessage('Mobile must be a string'),
-  body('password').isString().withMessage('Password must be a string'),
-], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+// POST a new sale
+// POST a new sale
+router.post('/', authenticateToken, async (req, res) => {
+    const {
+        product,
+        productId,
+        quantity,
+        cost,
+        date,
+        customerName,
+        customerAddress,
+        amountPaid,
+        amountDue,
+        totalDue
+    } = req.body;
 
-  try {
-    const { mobile, password } = req.body;
+    try {
+        // Find the product by ID
+        const productToUpdate = await Product.findById(productId);
 
-    const user = await User.findOne({ mobile });
-    if (!user || user.password !== password) {
-      return res.status(401).json({ message: 'Access denied' });
+        if (!productToUpdate) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        // Check if the quantity in the product is sufficient
+        if (productToUpdate.quantity < quantity) {
+            return res.status(400).json({ message: 'Insufficient product quantity' });
+        }
+
+        // Create the new sale
+        const newSale = new Sales({
+            product,
+            productId,
+            quantity,
+            cost,
+            date,
+            customerName,
+            customerAddress,
+            amountPaid,
+            amountDue,
+            totalDue
+        });
+
+        // Save the new sale
+        const savedSale = await newSale.save();
+
+        // Update the product quantity
+        productToUpdate.quantity -= quantity; // Decrease product quantity
+        await productToUpdate.save(); // Save the updated product
+
+        res.status(201).json(savedSale);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to create sale', error });
     }
-    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '10h' });
-    res.cookie('token', token, { httpOnly: true, secure: true }); 
-
-    return res.status(200).json({ message: 'Login successful', token, userType: user.type || user });
-  } catch (error) {
-    console.error('Login error:', error);
-    return res.status(500).json({ message: 'Internal Server Error' });
-  }
 });
 
+
+// PUT to update a sale by ID
+router.put('/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    const {
+        product,
+        productId,
+        quantity,
+        cost,
+        date,
+        customerName,
+        customerAddress,
+        amountPaid,  // Allow updating the payments array
+        amountDue,
+        totalDue
+    } = req.body;
+
+    try {
+        const existingSale = await Sales.findById(id);
+        if (!existingSale) {
+            return res.status(404).json({ message: 'Sale not found' });
+        }
+
+        // Calculate the quantity difference
+        const quantityDifference = quantity - existingSale.quantity;
+
+        // Adjust the product quantity based on the change
+        await adjustProductQuantity(productId, quantityDifference);
+
+        const updatedSale = await Sales.findByIdAndUpdate(
+            id,
+            {
+                product,
+                productId,
+                quantity,
+                cost,
+                date,
+                customerName,
+                customerAddress,
+                amountPaid,
+                amountDue,
+                totalDue
+            },
+            { new: true }
+        );
+
+        res.json(updatedSale);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to update sale', error: error.message });
+    }
+});
 
 module.exports = router;
