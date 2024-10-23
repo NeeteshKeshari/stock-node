@@ -10,6 +10,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  type: { // Add this field explicitly if it's missing
+    type: String,
+    required: true,
+  }
 });
 
 module.exports = mongoose.model('User', userSchema);
