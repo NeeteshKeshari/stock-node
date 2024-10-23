@@ -17,6 +17,7 @@ router.get('/', authenticateToken, async (req, res) => {
 router.post('/', authenticateToken, async (req, res) => {
     const {
         product,
+        productId,
         quantity,
         cost,
         date,
@@ -30,6 +31,7 @@ router.post('/', authenticateToken, async (req, res) => {
     try {
         const newSale = new Sales({
             product,
+            productId,
             quantity,
             cost,
             date,
@@ -52,6 +54,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const {
         product,
+        productId,
         quantity,
         cost,
         date,
@@ -67,6 +70,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
             id, 
             {
                 product,
+                productId,
                 quantity,
                 cost,
                 date,
