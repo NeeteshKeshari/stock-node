@@ -32,60 +32,19 @@ router.post('/login', [
   try {
     const { mobile, password } = req.body;
 
-    // Fetch user by mobile number
     const user = await User.findOne({ mobile });
     if (!user || user.password !== password) {
       return res.status(401).json({ message: 'Access denied' });
     }
-
-    // Generate JWT Token
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '10h' });
-    
-    // Set token in HTTP-only cookie (optional; you can send it directly instead)
-    res.cookie('token', token, { httpOnly: true, secure: true }); // Secure cookie if HTTPS
+    res.cookie('token', token, { httpOnly: true, secure: true }); 
 
-    // Send token in response
-    return res.status(200).json({ message: 'Login successful', token });
+    return res.status(200).json({ message: 'Login successful', token, userType: user.type || user });
   } catch (error) {
     console.error('Login error:', error);
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
-// Protected route to fetch user data based on token
-router.get('/profile', authenticateToken, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select('-password'); // Exclude password
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    res.json(user);
-  } catch (error) {
-    console.error('Error fetching user:', error);
-    res.status(500).json({ message: 'Failed to fetch user data', error });
-  }
-});
-
-// PUT route to update user data
-router.put('/update', authenticateToken, async (req, res) => {
-  try {
-    const { mobile, password } = req.body;
-
-    const updatedData = { mobile };
-    if (password) {
-      updatedData.password = password; // Update password directly
-    }
-
-    const user = await User.findByIdAndUpdate(req.user.id, updatedData, { new: true });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    res.json({ message: 'User updated successfully', user });
-  } catch (error) {
-    console.error('Failed to update user:', error);
-    res.status(500).json({ message: 'Failed to update user', error });
-  }
-});
 
 module.exports = router;
