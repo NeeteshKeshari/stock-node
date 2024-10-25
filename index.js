@@ -31,7 +31,8 @@ app.use(cors({
   //     callback(new Error('Not allowed by CORS'));
   //   }
   // },
-  origin: 'https://store-two-sigma.vercel.app',
+  // origin: 'https://store-two-sigma.vercel.app',
+  origin: 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
