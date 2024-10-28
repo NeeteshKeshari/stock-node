@@ -21,23 +21,19 @@ const adjustProductQuantity = async (productId, soldQuantity) => {
         throw new Error('Product not found');
     }
 
-    // Ensure that the product has enough quantity before proceeding
+    // Ensure enough quantity before proceeding
     if (product.quantity < soldQuantity) {
-        throw new Error('Not enough product quantity available');
+        throw new Error(`Insufficient quantity for product: ${product.name}`);
     }
 
-    // Decrease the product quantity
     product.quantity -= soldQuantity;
     await product.save();
 };
 
-// POST a new sale
+// POST a new sale with multiple products
 router.post('/', authenticateToken, async (req, res) => {
     const {
-        product,
-        productId,
-        quantity,
-        cost,
+        productList,
         date,
         customerName,
         customerAddress,
@@ -47,39 +43,47 @@ router.post('/', authenticateToken, async (req, res) => {
     } = req.body;
 
     try {
-        // Find the product by ID
-        const productToUpdate = await Product.findById(productId);
+        const saleItems = [];
+        
+        for (const item of productList) {
+            const { product, quantity, cost } = item;
+            
+            const productToUpdate = await Product.findOne({ name: product });
+            if (!productToUpdate) {
+                return res.status(404).json({ message: `Product ${product} not found` });
+            }
 
-        if (!productToUpdate) {
-            return res.status(404).json({ message: 'Product not found' });
+            // Check if quantity is sufficient
+            if (productToUpdate.quantity < quantity) {
+                return res.status(400).json({ message: `Insufficient quantity for product: ${product}` });
+            }
+
+            // Deduct the quantity
+            await adjustProductQuantity(productToUpdate._id, quantity);
+
+            saleItems.push({
+                product,
+                productId: productToUpdate._id,
+                quantity,
+                cost,
+            });
         }
 
-        // Check if the quantity in the product is sufficient
-        if (productToUpdate.quantity < quantity) {
-            return res.status(400).json({ message: 'Insufficient product quantity' });
-        }
-
-        // Create the new sale
+        // Create the sale
         const newSale = new Sales({
-            product,
-            productId,
-            quantity,
-            cost,
+            productList: saleItems,
             date,
             customerName,
             customerAddress,
-            amountPaid,
+            amountPaid: amountPaid.map(payment => ({
+                amount: payment.amount,
+                date: payment.date
+            })),
             amountDue,
             totalDue
         });
 
-        // Save the new sale
         const savedSale = await newSale.save();
-
-        // Update the product quantity
-        productToUpdate.quantity -= quantity; // Decrease product quantity
-        await productToUpdate.save(); // Save the updated product
-
         res.status(201).json(savedSale);
     } catch (error) {
         res.status(500).json({ message: 'Failed to create sale', error });
@@ -90,10 +94,7 @@ router.post('/', authenticateToken, async (req, res) => {
 router.put('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const {
-        product,
-        productId,
-        quantity,
-        cost,
+        productList,
         date,
         customerName,
         customerAddress,
@@ -102,37 +103,42 @@ router.put('/:id', authenticateToken, async (req, res) => {
         totalDue
     } = req.body;
 
-    console.log('Updating sale with ID:', id);
-    console.log('Data:', req.body);
-
     try {
         const existingSale = await Sales.findById(id);
         if (!existingSale) {
             return res.status(404).json({ message: 'Sale not found' });
         }
 
-        // Calculate the quantity difference
-        const quantityDifference = quantity - existingSale.quantity;
+        // Adjust quantities based on the difference for each product
+        for (const item of productList) {
+            const { product, quantity } = item;
 
-        console.log('Existing sale found:', existingSale);
-        console.log('Quantity difference:', quantityDifference);
+            const productToUpdate = await Product.findOne({ name: product });
+            if (!productToUpdate) {
+                return res.status(404).json({ message: `Product ${product} not found` });
+            }
 
-        // Adjust the product quantity based on the change
-        if (quantityDifference !== 0) {
-            await adjustProductQuantity(productId, Math.abs(quantityDifference));
+            const existingItem = existingSale.productList.find(p => p.product === product);
+            const quantityDifference = quantity - (existingItem ? existingItem.quantity : 0);
+
+            // Adjust product quantity
+            if (quantityDifference !== 0) {
+                await adjustProductQuantity(productToUpdate._id, Math.abs(quantityDifference));
+            }
         }
 
+        // Update sale details
         const updatedSale = await Sales.findByIdAndUpdate(
             id,
             {
-                product,
-                productId,
-                quantity,
-                cost,
+                productList,
                 date,
                 customerName,
                 customerAddress,
-                amountPaid,
+                amountPaid: amountPaid.map(payment => ({
+                    amount: payment.amount,
+                    date: payment.date
+                })),
                 amountDue,
                 totalDue
             },
@@ -145,23 +151,23 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-// DELETE a sale
+// DELETE a sale and adjust product quantities back
 router.delete('/:id', authenticateToken, async (req, res) => {
-    const { id } = req.params; // This should be the sale ID, not product ID
-    console.log('Deleting sale with ID:', id);
+    const { id } = req.params;
 
     try {
-        // Attempt to find and delete the sale using the correct ID
         const deletedSale = await Sales.findByIdAndDelete(id);
         if (!deletedSale) {
             return res.status(404).json({ message: 'Sale not found' });
         }
 
-        // Adjust the product quantity back based on the deleted sale
-        const productToUpdate = await Product.findById(deletedSale.productId);
-        if (productToUpdate) {
-            productToUpdate.quantity += deletedSale.quantity; // Add back the quantity
-            await productToUpdate.save();
+        // Adjust product quantities back
+        for (const item of deletedSale.productList) {
+            const productToUpdate = await Product.findById(item.productId);
+            if (productToUpdate) {
+                productToUpdate.quantity += item.quantity;
+                await productToUpdate.save();
+            }
         }
 
         res.status(200).json({ message: 'Sale deleted successfully' });
@@ -170,6 +176,5 @@ router.delete('/:id', authenticateToken, async (req, res) => {
         res.status(500).json({ message: 'Failed to delete sale', error });
     }
 });
-
 
 module.exports = router;
