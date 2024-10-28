@@ -23,7 +23,6 @@ router.post('/', authenticateToken, async (req, res) => {
         date,
         packingCharge,
         pouchCharge,
-        transportCharge,
         extraCharge,
         pisaiCharge
     } = req.body;
@@ -37,7 +36,6 @@ router.post('/', authenticateToken, async (req, res) => {
             date,
             packingCharge,
             pouchCharge,
-            transportCharge,
             extraCharge,
             pisaiCharge
         });
