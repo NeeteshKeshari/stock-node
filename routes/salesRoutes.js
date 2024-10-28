@@ -49,7 +49,9 @@ router.post('/', authenticateToken, async (req, res) => {
             const { product, quantity, cost } = item;
             
             const productToUpdate = await Product.findOne({ _id: productId });
-            console.log(product, Product, productToUpdate);
+            const allProducts = await Product.find({});
+            console.log('All products in the collection:', allProducts);
+            console.log(product, productToUpdate);
             if (!productToUpdate) {
                 return res.status(404).json({ message: `Product ${product} not found` });
             }
