@@ -49,8 +49,6 @@ router.post('/', authenticateToken, async (req, res) => {
             const { product, quantity, cost } = item;
             
             const productToUpdate = await Product.findOne({ _id: productId });
-            const allProducts = await Product.find({});
-            console.log('All products in the collection:', allProducts);
             console.log(product, productToUpdate);
             if (!productToUpdate) {
                 return res.status(404).json({ message: `Product ${product} not found` });
@@ -86,7 +84,10 @@ router.post('/', authenticateToken, async (req, res) => {
             totalDue
         });
 
+        console.log(newSale);
+
         const savedSale = await newSale.save();
+        console.log(savedSale);
         res.status(201).json(savedSale);
     } catch (error) {
         res.status(500).json({ message: 'Failed to create sale', error });
