@@ -46,7 +46,9 @@ router.post('/', authenticateToken, async (req, res) => {
         const saleItems = [];
         
         for (const item of productList) {
-            const { product, quantity, cost } = item;
+            const { product, productId, quantity, cost } = item;
+            const allProducts = await Product.find({});
+            console.log('All products in the collection:', allProducts);
             
             const productToUpdate = await Product.findOne({ _id: productId });
             console.log(product, productToUpdate);
