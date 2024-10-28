@@ -14,8 +14,8 @@ const salesSchema = new mongoose.Schema({
   customerAddress: { type: String, required: true },
   amountPaid: [
     {
-      amount: { type: Number, required: true },
-      date: { type: Date, required: true }
+      amount: { type: Number },
+      date: { type: Date }
     }
   ],
   amountDue: { type: Number, required: false },
