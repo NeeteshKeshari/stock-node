@@ -1,10 +1,14 @@
 const mongoose = require('mongoose');
 
 const salesSchema = new mongoose.Schema({
-  product: { type: String, required: true },
-  productId: { type: String, required: true },
-  quantity: { type: Number, required: true },
-  cost: { type: Number, required: true },
+  productList: [
+    {
+      product: { type: String, required: true },
+      productId: { type: String, required: true },
+      quantity: { type: Number, required: true },
+      cost: { type: Number, required: true }
+    }
+  ],
   date: { type: Date, required: true },
   customerName: { type: String, required: true },
   customerAddress: { type: String, required: true },
@@ -14,7 +18,7 @@ const salesSchema = new mongoose.Schema({
       date: { type: Date, required: true }
     }
   ],
-  amountDue: { type: Number, required: true },
+  amountDue: { type: Number, required: false },
   totalDue: { type: Number, required: true }
 }, { strict: false });
 
