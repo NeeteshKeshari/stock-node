@@ -113,28 +113,40 @@ router.put('/:id', authenticateToken, async (req, res) => {
         }
 
         // Adjust quantities based on the difference for each product
-        for (const item of productList) {
-            const { product, quantity } = item;
+        const previousProductList = existingSale.productList;
+        const productUpdates = {};
 
-            const productToUpdate = await Product.findOne({ name: product });
+        for (const item of productList) {
+            const { product, productId, quantity } = item;
+
+            const productToUpdate = await Product.findById(productId);
             if (!productToUpdate) {
                 return res.status(404).json({ message: `Product ${product} not found` });
             }
 
-            const existingItem = existingSale.productList.find(p => p.product === product);
-            const quantityDifference = quantity - (existingItem ? existingItem.quantity : 0);
+            // Find the existing item in the previous sale
+            const existingItem = previousProductList.find(p => p.productId.toString() === productId.toString());
+            const quantityDifference = existingItem ? quantity - existingItem.quantity : quantity;
 
-            // Adjust product quantity
+            // Adjust product quantity accordingly
             if (quantityDifference !== 0) {
-                await adjustProductQuantity(productToUpdate._id, Math.abs(quantityDifference));
+                await adjustProductQuantity(productToUpdate._id, -quantityDifference);
             }
+
+            // Keep track of product updates
+            productUpdates[productId] = {
+                product,
+                productId,
+                quantity,
+                cost: item.cost // Assuming cost is part of the item
+            };
         }
 
         // Update sale details
         const updatedSale = await Sales.findByIdAndUpdate(
             id,
             {
-                productList,
+                productList: Object.values(productUpdates),
                 date,
                 customerName,
                 customerAddress,
