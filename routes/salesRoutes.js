@@ -120,7 +120,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
             const { product, productId, quantity, cost } = item;
             
             const productToUpdate = await Product.findOne({ _id: productId });
-            console.log(productToUpdate)
+            console.log(product, productId, quantity, cost, productToUpdate)
             if (!productToUpdate) {
                 return res.status(404).json({ message: `Product ${product} not found` });
             }
